@@ -16,15 +16,21 @@
         default = pkgs.mkShellNoCC { };
       });
 
-      templates = lib.mapAttrs (n: _: {
-        path = fs.toSource {
-          root = ./.;
-          fileset = fs.unions [
-            ./.envrc
-            ./src/${n}
-          ];
-        };
-        description = "${lib.removeSuffix ".nix" n} development environment";
-      }) (builtins.readDir ./src);
+      templates = lib.mapAttrs' (
+        n: _:
+        let
+          name = lib.removeSuffix ".nix" n;
+        in
+        lib.nameValuePair name {
+          path = fs.toSource {
+            root = ./.;
+            fileset = fs.unions [
+              ./.envrc
+              ./src/${n}
+            ];
+          };
+          description = "${name} development environment";
+        }
+      ) (builtins.readDir ./src);
     };
 }
