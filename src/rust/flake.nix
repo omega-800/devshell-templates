@@ -17,7 +17,18 @@
     }:
     let
       systems = nixpkgs.lib.platforms.unix;
-      eachSystem = f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
+      eachSystem =
+        f:
+        nixpkgs.lib.genAttrs systems (
+          system:
+          f (
+            import nixpkgs {
+              inherit system;
+              config = { };
+              overlays = [ ];
+            }
+          )
+        );
       pname = "";
     in
     {
@@ -34,6 +45,7 @@
         let
           rustPkgs = import nixpkgs {
             inherit (pkgs) system;
+            config = { };
             overlays = [
               rust-overlay.overlays.default
               self.overlays.default

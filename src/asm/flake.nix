@@ -7,7 +7,18 @@
     { self, nixpkgs }:
     let
       systems = nixpkgs.lib.platforms.unix;
-      eachSystem = f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
+      eachSystem =
+        f:
+        nixpkgs.lib.genAttrs systems (
+          system:
+          f (
+            import nixpkgs {
+              inherit system;
+              config = { };
+              overlays = [ ];
+            }
+          )
+        );
       pname = "";
     in
     {
