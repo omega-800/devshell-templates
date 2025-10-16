@@ -21,15 +21,13 @@
       pname = "";
     in
     {
-      overlays.default = final: prev: {
-        rustToolchain =
-          final.rustToolchain or { }
-          // prev.rust-bin.stable.latest.default.override {
-            extensions = [
-              "rust-src"
-              "rustfmt"
-            ];
-          };
+      overlays.default = _: prev: {
+        rustToolchain = prev.rust-bin.stable.latest.default.override {
+          extensions = [
+            "rust-src"
+            "rustfmt"
+          ];
+        };
       };
       devShells = eachSystem (
         pkgs:

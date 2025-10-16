@@ -10,7 +10,21 @@
     }:
     let
       systems = nixpkgs.lib.platforms.unix;
-      eachSystem = f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
+      eachSystem =
+        f:
+        nixpkgs.lib.genAttrs systems (
+          system:
+          f (
+            import nixpkgs {
+              inherit system;
+              config = {
+                android_sdk.accept_license = true;
+                allowUnfree = true;
+              };
+              overlays = [ ];
+            }
+          )
+        );
       buildToolsVer = "34.0.0";
       cmakeVer = "3.10.2";
     in
@@ -18,19 +32,12 @@
       devShells = eachSystem (
         pkgs:
         let
-          androidPkgs = import nixpkgs {
-            inherit (pkgs) system;
-            config = {
-              android_sdk.accept_license = true;
-              allowUnfree = true;
-            };
-          };
-          androidComposition = androidPkgs.androidenv.composeAndroidPackages {
+          androidComposition = pkgs.androidenv.composeAndroidPackages {
             toolsVersion = "26.1.1";
             platformToolsVersion = "34.0.5";
             buildToolsVersions = [ buildToolsVer ];
             platformVersions = [
-              (androidPkgs.lib.versions.major buildToolsVer)
+              (pkgs.lib.versions.major buildToolsVer)
             ];
             includeEmulator = true;
             emulatorVersion = "34.1.9";
@@ -62,22 +69,22 @@
             ];
           };
           androidSdk = androidComposition.androidsdk;
-          jdkPin = androidPkgs.jdk;
+          jdkPin = pkgs.jdk;
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
         in
         {
-          default = androidPkgs.mkShellNoCC {
+          default = pkgs.mkShellNoCC {
             inherit ANDROID_HOME;
             ANDROID_NDK_ROOT = "${ANDROID_HOME}/ndk-bundle";
             ANDROID_AVD_HOME = "/home/omega/.config/.android/avd";
             JAVA_HOME = jdkPin.home;
-            LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [ androidPkgs.sqlite ]}";
+            LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [ pkgs.sqlite ]}";
             GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/${buildToolsVer}/aapt2";
             shellHook = ''
               export PATH="$(echo "$ANDROID_HOME/cmake/${cmakeVer}".*/bin):$PATH"
             '';
             buildInputs =
-              (with androidPkgs; [
+              (with pkgs; [
                 flutter
                 sqlite
                 xdg-user-dirs

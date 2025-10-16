@@ -16,18 +16,23 @@
         default = pkgs.mkShellNoCC { };
       });
 
-      templates = lib.mapAttrs (n: _: {
-        path = ./src/${n};
-        /*
-          "${fs.toSource {
-                      root = ./.;
-                      fileset = fs.unions [
-                        ./.envrc
-                        ./src/${n}
-                      ];
-                    }}";
-        */
-        description = "${n} development environment";
-      }) (builtins.readDir ./src);
+      templates =
+        let
+          files = builtins.readDir ./src;
+        in
+        (lib.mapAttrs (n: _: {
+          path = "${fs.toSource {
+            root = ./src/${n};
+            fileset = fs.fileFilter (f: !(f.hasExt "lock")) ./src/${n};
+          }}";
+          description = "${n} development environment";
+        }) files)
+        // lib.mapAttrs' (
+          n: _:
+          lib.nameValuePair "${n}-lock" {
+            path = ./src/${n};
+            description = "${n} development environment with flake.lock";
+          }
+        ) files;
     };
 }
