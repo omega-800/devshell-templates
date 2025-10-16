@@ -1,0 +1,5 @@
+result
+.direnv
+__pycache__/
+*.py[codz]
+*$py.class

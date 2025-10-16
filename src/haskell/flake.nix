@@ -1,14 +1,13 @@
 {
   description = "haskell development environment";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable"; 
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs =
     { self, nixpkgs }:
     let
       systems = nixpkgs.lib.platforms.unix;
-      eachSystem =
-        f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
+      eachSystem = f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
       pname = "";
     in
     {
@@ -29,15 +28,15 @@
                 "
             '';
           };
-            buildInputs = with pkgs; [
-              ghcid
-              stack-wrapped
-              (ghc.withPackages (
-                p: with p; [
-                  haskell-language-server
-                ]
-              ))
-            ];
+          buildInputs = with pkgs; [
+            ghcid
+            stack-wrapped
+            (ghc.withPackages (
+              p: with p; [
+                haskell-language-server
+              ]
+            ))
+          ];
         in
         {
           default = pkgs.mkShellNoCC {
@@ -51,19 +50,22 @@
         pkgs:
         let
           fs = pkgs.lib.fileset;
+          root = ./.;
         in
         {
           default = pkgs.haskell.lib.buildStackProject {
             inherit (pkgs) ghc;
             name = pname;
             src = fs.toSource {
-              root = ./.;
-              fileset = fs.unions [
-                ./src/Main.hs
-                ./stack.yaml
-                ./stack.yaml.lock
-                ./package.yaml
-              ];
+              inherit root;
+              fileset = fs.intersection (fs.gitTracked root) (
+                fs.unions [
+                  ./stack.yaml
+                  ./stack.yaml.lock
+                  ./package.yaml
+                  (fs.fileFilter (f: f.hasExt "hs") ./src)
+                ]
+              );
             };
           };
         }

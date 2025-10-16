@@ -18,15 +18,18 @@
     let
       systems = nixpkgs.lib.platforms.unix;
       eachSystem = f: nixpkgs.lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
+      pname = "";
     in
     {
       overlays.default = final: prev: {
-        rustToolchain = prev.rust-bin.stable.latest.default.override {
-          extensions = [
-            "rust-src"
-            "rustfmt"
-          ];
-        };
+        rustToolchain =
+          final.rustToolchain or { }
+          // prev.rust-bin.stable.latest.default.override {
+            extensions = [
+              "rust-src"
+              "rustfmt"
+            ];
+          };
       };
       devShells = eachSystem (
         pkgs:
@@ -57,5 +60,35 @@
           };
         }
       );
+      packages = eachSystem (
+        pkgs:
+        let
+          fs = pkgs.lib.fileset;
+          root = ./.;
+        in
+        {
+          default = pkgs.rustPlatform.buildRustPackage {
+            inherit pname;
+            version = "0.0.1";
+            src = fs.toSource {
+              inherit root;
+              fileset = fs.intersection (fs.gitTracked root) (
+                fs.unions [
+                  ./Cargo.toml
+                  ./Cargo.lock
+                  (fs.fileFilter (f: f.hasExt "rs") ./src)
+                ]
+              );
+            };
+            cargoLock.lockFile = ./Cargo.lock;
+          };
+        }
+      );
+      apps = eachSystem (pkgs: {
+        default = {
+          type = "app";
+          program = "${self.packages.${pkgs.system}.default}/bin/${pname}";
+        };
+      });
     };
 }
