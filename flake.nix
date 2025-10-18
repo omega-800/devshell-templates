@@ -8,15 +8,9 @@
     let
       inherit (nixpkgs) lib;
       fs = lib.fileset;
-      systems = lib.platforms.unix;
-      eachSystem = f: lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
       files = builtins.readDir ./src;
     in
     {
-      devShells = eachSystem (pkgs: {
-        default = pkgs.mkShellNoCC { };
-      });
-
       templates =
         (lib.mapAttrs (n: _: {
           path = "${fs.toSource {
