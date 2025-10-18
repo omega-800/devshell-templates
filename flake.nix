@@ -10,6 +10,7 @@
       fs = lib.fileset;
       systems = lib.platforms.unix;
       eachSystem = f: lib.genAttrs systems (system: f (import nixpkgs { inherit system; }));
+      files = builtins.readDir ./src;
     in
     {
       devShells = eachSystem (pkgs: {
@@ -17,9 +18,6 @@
       });
 
       templates =
-        let
-          files = builtins.readDir ./src;
-        in
         (lib.mapAttrs (n: _: {
           path = "${fs.toSource {
             root = ./src/${n};
