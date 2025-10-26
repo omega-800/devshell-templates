@@ -2,9 +2,9 @@
 #let language = "de"
 #let fsize = 11pt
 #let columnsnr = 1
-#let author= "Georgiy Shevoroshkin",
-#let title= "Template",
-#let font = (font: "Arimo Nerd Font", lang: language, region: "ch", size: fsize, fill: colors.black)
+#let author= "Georgiy Shevoroshkin"
+#let title= "Template"
+#let font = (font: "Arimo Nerd Font", lang: language, region: "ch", size: fsize, fill: rgb("000000"))
 #let languages = (
   de: (page: "Seite", chapter: "Kapitel", toc: "Inhaltsverzeichnis", term: "Begriff", definition: "Bedeutung", summary: "Zusammenfassung"),
   en: (page: "Page", chapter: "Chapter", toc: "Contents", term: "Term", definition: "Definition", summary: "Summary"),
@@ -13,7 +13,7 @@
 #set document(
   author: author,
   title: title,
-  date: date,
+  date: datetime.today(),
 )
 #set page(
   flipped: false,
