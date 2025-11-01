@@ -6,12 +6,67 @@
   outputs =
     { nixpkgs, ... }:
     let
-      plantumlFiles = [ ];
-      fonts = pkgs: [ pkgs.roboto ];
+      pumlLib =
+        pkgs:
+        let
+          ### config
+
+          plantumlFiles = [ ];
+          fonts = [ ];
+
+          ### lib
+
+          inherit (pkgs) lib;
+          inherit (builtins) length replaceStrings;
+          fontsConf = pkgs.makeFontsConf {
+            fontDirectories = fonts;
+          };
+          pumlExt = [
+            ".puml"
+            ".plantuml"
+            ".pu"
+          ];
+          mapFilesOr =
+            f: def: if (length plantumlFiles) == 0 then def else lib.concatMapStringsSep " " f plantumlFiles;
+          toWatch = mapFilesOr (f: f) "-r --include '.*\\.p(lant)?u(ml)?$' ./";
+          toOpen = mapFilesOr (
+            f: (replaceStrings pumlExt (lib.replicate 3 ".png") f)
+          ) ''$(${pkgs.toybox}/bin/find . -type f -iname \*.png)'';
+          toCompile =
+            mapFilesOr (f: f)
+              ''$(${pkgs.toybox}/bin/find . -type f \( ${
+                lib.concatMapStringsSep " -o " (e: "-iname \\*${e}") pumlExt
+              } \))'';
+          mkScript =
+            name: text:
+            pkgs.writeShellApplication {
+              excludeShellChecks = [ "SC2046" ];
+              inherit text;
+              name = "${name}-puml";
+            };
+          watchScript = mkScript "watch" ''
+            ${pkgs.inotify-tools}/bin/inotifywait -m --format '%f' -e create -e modify ${toWatch} |
+            	while read -r file; do
+                ${pkgs.plantuml}/bin/plantuml "$file"
+            	done
+          '';
+          openScript = mkScript "open" "${pkgs.feh}/bin/feh ${toOpen}";
+          # FIXME: watch-puml doesn't get killed if open-puml dies
+          devScript =
+            mkScript "dev" "(trap 'kill 0' SIGINT; ${watchScript}/bin/watch-puml & ${openScript}/bin/open-puml)";
+          compileScript = mkScript "compile" "${pkgs.plantuml}/bin/plantuml ${toCompile}";
+        in
+        {
+          inherit
+            watchScript
+            openScript
+            devScript
+            compileScript
+            fontsConf
+            ;
+        };
 
       systems = nixpkgs.lib.platforms.unix;
-      inherit (nixpkgs) lib;
-      inherit (builtins) length replaceStrings;
       eachSystem =
         f:
         nixpkgs.lib.genAttrs systems (
@@ -24,68 +79,42 @@
             }
           )
         );
-
-      fontsConf =
-        pkgs:
-        pkgs.makeFontsConf {
-          fontDirectories = fonts pkgs;
-        };
-      pumlExt = [
-        ".puml"
-        ".plantuml"
-        ".pu"
-      ];
-      mapFilesOr =
-        f: def: if (length plantumlFiles) == 0 then def else lib.concatMapStringsSep " " f plantumlFiles;
-      toWatch = mapFilesOr (f: f) "-r --include '.*\\.p(lant)?u(ml)?$' ./";
-      toOpen =
-        pkgs:
-        mapFilesOr (
-          f: (replaceStrings pumlExt (lib.replicate 3 ".png") f)
-        ) ''$(${pkgs.toybox}/bin/find . -type f -iname \*.png)'';
-      watchCmd = pkgs: ''
-        ${pkgs.inotify-tools}/bin/inotifywait -m --format '%f' -e create -e modify ${toWatch} |
-        	while read -r file; do
-            ${pkgs.plantuml}/bin/plantuml "$file"
-        	done
-      '';
-      openCmd = pkgs: "${pkgs.feh}/bin/feh ${toOpen pkgs}";
-      mkScript =
-        pkgs: name: text:
-        pkgs.writeShellApplication {
-          excludeShellChecks = [ "SC2046" ];
-          inherit text;
-          name = "${name}-puml";
-        };
-      watchScript = pkgs: mkScript pkgs "watch" "${watchCmd pkgs}";
-      openScript = pkgs: mkScript pkgs "open" "${openCmd pkgs}";
-      # FIXME: watch-puml doesn't get killed if open-puml dies
-      devScript =
-        pkgs:
-        mkScript pkgs "dev"
-          "(trap 'kill 0' SIGINT; ${watchScript pkgs}/bin/watch-puml & ${openScript pkgs}/bin/open-puml)";
     in
     {
-      devShells = eachSystem (pkgs: {
-        default = pkgs.mkShellNoCC {
-          packages = [
-            (watchScript pkgs)
-            (openScript pkgs)
-            (devScript pkgs)
-            pkgs.plantuml
+      devShells = eachSystem (
+        pkgs:
+        let
+          inherit (pumlLib pkgs)
+            watchScript
+            openScript
+            devScript
+            compileScript
+            fontsConf
+            ;
+          scripts = [
+            watchScript
+            openScript
+            devScript
+            compileScript
           ];
-          FONTCONFIG_FILE = "${fontsConf pkgs}";
-        };
-        server = pkgs.mkShellNoCC {
-          packages = with pkgs; [
-            (watchScript pkgs)
-            (openScript pkgs)
-            (devScript pkgs)
-            plantuml
-            plantuml-server
-          ];
-          FONTCONFIG_FILE = "${fontsConf pkgs}";
-        };
-      });
+        in
+        {
+          default = pkgs.mkShellNoCC {
+            packages = scripts ++ [
+              pkgs.plantuml
+            ];
+            FONTCONFIG_FILE = "${fontsConf}";
+          };
+          server = pkgs.mkShellNoCC {
+            packages =
+              scripts
+              ++ (with pkgs; [
+                plantuml
+                plantuml-server
+              ]);
+            FONTCONFIG_FILE = "${fontsConf}";
+          };
+        }
+      );
     };
 }
