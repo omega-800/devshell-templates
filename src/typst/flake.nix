@@ -51,12 +51,39 @@
             src = typixLib.cleanTypstSource ./.;
             unstable_typstPackages = [ ];
           };
+          sources = [
+            "vpn.typ"
+            "main.typ"
+          ];
+          watchScriptsPerDoc = map (
+            typstSource:
+            typixLib.watchTypstProject (
+              commonArgs
+              // {
+                inherit typstSource;
+                typstOutput = (pkgs.lib.removeSuffix ".typ" typstSource) + ".pdf";
+              }
+            )
+          ) sources;
+          watch-script = typixLib.watchTypstProject commonArgs;
         in
         {
-          inherit typixLib commonArgs extraArgs;
+          inherit typixLib commonArgs extraArgs watch-script;
           build-drv = typixLib.buildTypstProject (commonArgs // extraArgs);
           build-script = typixLib.buildTypstProjectLocal (commonArgs // extraArgs);
-          watch-script = typixLib.watchTypstProject commonArgs;
+          watch-all = pkgs.writeShellApplication {
+            text = "(trap 'kill 0' SIGINT; ${
+              pkgs.lib.concatMapStringsSep " & " (s: "${s}/bin/typst-watch") watchScriptsPerDoc
+            })";
+            name = "typst-watch-all";
+          };
+          watch-open = pkgs.writeShellApplication {
+            text = "${pkgs.writeShellScript "watch-with-zathura" ''
+              ${pkgs.zathura}/bin/zathura "$PWD/${builtins.replaceStrings [".typ"] [""] commonArgs.typstSource}.pdf" &
+              ${(mkApp watch-script).program}
+              ''}";
+            name = "typst-watch-open";
+          };
         };
     in
     {
@@ -67,13 +94,14 @@
       apps = eachSystem (
         pkgs:
         let
-          inherit (typixPkgs pkgs) watch-script build-script;
-          watch = mkApp watch-script;
+          inherit (typixPkgs pkgs) watch-script build-script watch-open;
+          wopen = watch-open;
         in
         {
-          inherit watch;
-          default = watch;
+          inherit wopen;
+          default = wopen;
           build = mkApp build-script;
+          watch = mkApp watch-script;
         }
       );
 
@@ -82,7 +110,9 @@
         let
           inherit (typixPkgs pkgs)
             watch-script
+            watch-open
             build-script
+            watch-all
             commonArgs
             typixLib
             ;
@@ -93,6 +123,8 @@
             packages = [
               build-script
               watch-script
+              watch-open
+              watch-all
               pkgs.typstfmt
             ];
           };
