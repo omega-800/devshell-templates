@@ -95,7 +95,7 @@
         pkgs:
         let
           inherit (typixPkgs pkgs) watch-script build-script watch-open;
-          wopen = watch-open;
+          wopen = mkApp watch-open;
         in
         {
           inherit wopen;
