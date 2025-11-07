@@ -1,41 +1,17 @@
+#import "./glossary.typ": *
+
 #let dateformat = "[day].[month].[year]"
-#let fsize = 11pt
-#let columnsnr = 1
-#let language = "de"
-#let author = "Georgiy Shevoroshkin"
-#let title = "Template"
-#let subtitle = "Subtitle"
-#let toc = (enabled: true, depth: 9, columnsnr: 1)
-#let bib-enable = true
-#let illustrations-enable = true 
-#let tables-enable = true
-#let glossary-enable = true
+
 #let colors = (
   red: rgb("#CD533B"), green: rgb("#84B082"), blue: rgb("#b0c4de"), darkblue: rgb("#4874AD"), black: rgb("#090302"), white: rgb("#f5f5f5"), comment: rgb("#444444"),
 )
-#let font = (
-  font: "Arimo Nerd Font", lang: language, region: "ch", size: fsize, fill: colors.black,
-)
 #let languages = (
   de: (
-    page: "Seite", chapter: "Kapitel", toc: "Inhaltsverzeichnis", term: "Begriff", definition: "Bedeutung", summary: "Zusammenfassung",
+    page: "Seite", chapter: "Kapitel", toc: "Inhaltsverzeichnis", term: "Begriff", definition: "Bedeutung", summary: "Zusammenfassung", glossary: "Glossar", tables: "Tabellen", illustrations: "Illustrationen",
   ), en: (
-    page: "Page", chapter: "Chapter", toc: "Contents", term: "Term", definition: "Definition", summary: "Summary",
+    page: "Page", chapter: "Chapter", toc: "Contents", term: "Term", definition: "Definition", summary: "Summary", glossary: "Glossary", tables: "Tables", illustrations: "Illustrations",
   ),
 )
-#let glossary-entry(name, description) = {
-  figure([
-    #grid(columns: (3fr, 8fr), gutter: 5mm, [
-      #align(left, text(size: 12pt, [*#name*]))
-    ], align(left, description))
-    #line(length: 100%, stroke: 0.5pt + rgb("#c4c4c4"))
-  ], kind: "glossary-entry", supplement: name)
-}
-#let glossary = (OSS: (desc: [Open Source Software], link: <oss>))
-#let g = (k) => link(glossary.at(k).link, k)
-#let outline-glossary = () => glossary.pairs().map(((k, v)) =>
-[#glossary-entry(k, v.desc) #v.link]).join()
-
 #let corr(body) = {
   set text(fill: colors.red, weight: "bold")
   body
@@ -101,12 +77,16 @@
 #let no-ligature(t) = {
   text(features: (calt: 0), t)
 }
-#let deftbl(..body) = {
-  table(
-    columns: (auto, 1fr), table.header([#languages.at(language).term], [#languages.at(language).definition]), ..body,
+#let doc = (
+  author: "Georgiy Shevoroshkin", title: "Template", subtitle: "Subtitle", enable: (
+    toc: true, bib: true, illustrations: true, tables: true, glossary: true,
+  ), fsize: 11pt, columnsnr: 1, toc: (depth: 9, columnsnr: 1), language: "de", body,
+) => {
+  let font = (
+    font: "Arimo Nerd Font", lang: language, region: "ch", size: fsize, fill: colors.black,
   )
-}
-#let doc = (body) => {
+  let font2 = (..font, font: "Fira Code", weight: "bold", fill: colors.darkblue)
+
   set document(author: author, title: title, date: datetime.today())
   set page(flipped: false, columns: columnsnr, margin: if (columnsnr < 2) {
     (top: 2cm, left: 1.5cm, right: 1.5cm, bottom: 2cm)
@@ -144,7 +124,7 @@
 
   show table.cell.where(y: 0): emph
   show math.equation: set text(font: "Fira Math")
-  show raw: set text(font: "Fira Code")
+  show raw: set text(font: font2.font)
   show link: it => [
     #set text(weight: 500, fill: colors.darkblue)
     #underline(offset: 0.7mm, stroke: colors.blue, it)
@@ -199,7 +179,7 @@
     #v(1em, weak: true)
     #subtitle-fmt[#subtitle]
   ]
-  if (toc.enabled) {
+  if (enable.toc) {
     heading(outlined: false, numbering: none, languages.at(language).toc)
     columns(
       toc.at("columns", default: 1), outline(depth: toc.at("depth", default: none), title: none),
@@ -210,21 +190,24 @@
   set par(justify: true)
   body
 
-  if (glossary-enable) {
-    [= Glossary]
+  if (enable.glossary) {
+    pagebreak()
+    heading(languages.at(language).glossary)
     outline-glossary()
   }
-  if (bib-enable) {
-    bibliography("citations.bib")
+  if (enable.bib) {
     pagebreak()
+    show bibliography: set heading(numbering: "1.")
+    bibliography("citations.bib")
   }
-  if (illustrations-enable or tables-enable) {
-    if (illustrations-enable) {
-      [= Illustrations]
+  if (enable.illustrations or enable.tables) {
+    pagebreak()
+    if (enable.illustrations) {
+      heading(languages.at(language).illustrations)
       outline(title: none, target: figure.where(kind: image))
     }
-    if (tables-enable) {
-      [= Tables]
+    if (enable.tables) {
+      heading(languages.at(language).tables)
       outline(title: none, target: figure.where(kind: table))
     }
   }
