@@ -1,3 +1,3 @@
 #import "./lib.typ": *
 
-= Template
+#show: doc
