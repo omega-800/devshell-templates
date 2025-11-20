@@ -37,8 +37,9 @@
         pkgs:
         let
           typixLib = typix.lib.${pkgs.system};
+          sources = [ "main.typ" ];
           commonArgs = {
-            typstSource = "main.typ";
+            typstSource = builtins.elemAt sources 0;
             fontPaths = with pkgs; [
               "${nerd-fonts.jetbrains-mono}/share/fonts/truetype"
               "${fira-math}/share/fonts/opentype"
@@ -51,10 +52,6 @@
             src = typixLib.cleanTypstSource ./.;
             unstable_typstPackages = [ ];
           };
-          sources = [
-            "vpn.typ"
-            "main.typ"
-          ];
           watchScriptsPerDoc = map (
             typstSource:
             typixLib.watchTypstProject (
