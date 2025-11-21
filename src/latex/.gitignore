@@ -167,3 +167,4 @@ TSWLatexianTemp*
 *.sta
 *.lpz
 *.xwm
+.pre-commit-config.yaml

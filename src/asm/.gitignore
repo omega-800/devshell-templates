@@ -22,3 +22,4 @@ result
 *.mod*
 *.cmd
 *.dwo
+.pre-commit-config.yaml
