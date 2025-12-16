@@ -13,7 +13,6 @@ eg: `nix flake init --template github:omega-800/devshell-templates#rust`
 
 ### languages 
 
-- nix
 - java
 - lua
 - commonlisp
@@ -21,7 +20,6 @@ eg: `nix flake init --template github:omega-800/devshell-templates#rust`
 - python 
 - jupyter
 - postgresql
-- plantuml
 - ocaml
 
 ### features
