@@ -115,8 +115,8 @@
               (trap 'kill 0' SIGINT; ${pkgs.zathura}/bin/zathura "$PWD/${
                 builtins.replaceStrings [ ".typ" ] [ "" ] commonArgs.typstSource
               }.pdf" &
-              ${(mkApp watch-script).program}
-            ''})";
+              ${(mkApp watch-script).program})
+            ''}";
             name = "typst-watch-open";
           };
         };
