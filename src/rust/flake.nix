@@ -25,7 +25,10 @@
             import nixpkgs {
               inherit system;
               config = { };
-              overlays = [ ];
+            overlays = [
+              rust-overlay.overlays.default
+              self.overlays.default
+            ];
             }
           )
         );
@@ -42,19 +45,9 @@
       };
       devShells = eachSystem (
         pkgs:
-        let
-          rustPkgs = import nixpkgs {
-            inherit (pkgs) system;
-            config = { };
-            overlays = [
-              rust-overlay.overlays.default
-              self.overlays.default
-            ];
-          };
-        in
         {
-          default = rustPkgs.mkShellNoCC {
-            packages = with rustPkgs; [
+          default = pkgs.mkShellNoCC {
+            packages = with pkgs; [
               rustToolchain
               openssl
               pkg-config
@@ -65,7 +58,7 @@
             ];
             env = {
               RUST_BACKTRACE = 1;
-              RUST_SRC_PATH = "${rustPkgs.rustToolchain}/lib/rustlib/src/rust/library";
+              RUST_SRC_PATH = "${pkgs.rustToolchain}/lib/rustlib/src/rust/library";
             };
           };
         }
