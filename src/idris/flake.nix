@@ -1,5 +1,5 @@
 {
-  description = "go development environment";
+  description = "idris development environment";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -22,15 +22,14 @@
       pname = "";
     in
     {
-      devShells = eachSystem (pkgs: {
-        default = pkgs.mkShellNoCC {
-          packages = with pkgs; [
-            go
-            gotools
-            golangci-lint
-          ];
-        };
-      });
+      devShells = eachSystem (
+        pkgs:
+        {
+          default = pkgs.mkShellNoCC { 
+            buildInputs = with pkgs; [ idris2 ];
+          };
+        }
+      );
 
       packages = eachSystem (
         pkgs:
@@ -39,20 +38,17 @@
           root = ./.;
         in
         {
-          default = pkgs.buildGoModule {
-            inherit pname;
-            version = "0.0.1";
-            vendorHash = null;
-            src = fs.toSource {
-              inherit root;
-              fileset = fs.intersection (fs.gitTracked root) (
-                fs.unions [
-                  ./go.mod
-                  (fs.fileFilter (f: f.hasExt "go") ./src)
-                  (fs.fileFilter (f: f.hasExt "go") ./.)
-                ]
-              );
-            };
+          default = pkgs.buildIdrisPackage {
+            name = pname;
+            src = root;
+            # src = fs.toSource {
+            #   inherit root;
+            #   fileset = fs.intersection (fs.gitTracked root) (
+            #     fs.unions [
+            #       (fs.fileFilter (f: f.hasExt "hs") ./src)
+            #     ]
+            #   );
+            # };
           };
         }
       );

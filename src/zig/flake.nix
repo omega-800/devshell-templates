@@ -50,38 +50,39 @@
       });
 
       /*
-        TODO:
-        packages = eachSystem (
-          pkgs:
-          let
-            fs = pkgs.lib.fileset;
-            root = ./.;
-          in
-          {
-            default = pkgs.buildGoModule {
-              inherit pname;
-              version = "0.0.1";
-              vendorHash = null;
-              src = fs.toSource {
-                inherit root;
-                fileset = fs.intersection (fs.gitTracked root) (
-                  fs.unions [
-                    ./go.mod
-                    (fs.fileFilter (f: f.hasExt "go") ./src)
-                    (fs.fileFilter (f: f.hasExt "go") ./.)
-                  ]
-                );
+          TODO:
+          packages = eachSystem (
+            pkgs:
+            let
+              fs = pkgs.lib.fileset;
+              root = ./.;
+            in
+            {
+              default = pkgs.buildGoModule {
+                inherit pname;
+                version = "0.0.1";
+                vendorHash = null;
+                src = fs.toSource {
+                  inherit root;
+                  fileset = fs.intersection (fs.gitTracked root) (
+                    fs.unions [
+                      ./go.mod
+                      (fs.fileFilter (f: f.hasExt "go") ./src)
+                      (fs.fileFilter (f: f.hasExt "go") ./.)
+                    ]
+                  );
+                };
               };
-            };
-          }
-        );
+            }
+          );
 
-        apps = eachSystem (pkgs: {
-          default = {
+        apps = eachSystem (
+          pkgs:
+          pkgs.lib.mapAttrs (_: drv: {
             type = "app";
-            program = "${self.packages.${pkgs.system}.default}/bin/${pname}";
-          };
-        });
+            program = "${drv}${drv.passthru.exePath or "/bin/${drv.pname or drv.name}"}";
+          }) self.packages.${pkgs.system}
+        );
       */
     };
 }

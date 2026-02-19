@@ -55,11 +55,12 @@
         }
       );
 
-      apps = eachSystem (pkgs: {
-        default = {
+      apps = eachSystem (
+        pkgs:
+        pkgs.lib.mapAttrs (_: drv: {
           type = "app";
-          program = "${self.packages.${pkgs.system}.default}/bin/${pname}";
-        };
-      });
+          program = "${drv}${drv.passthru.exePath or "/bin/${drv.pname or drv.name}"}";
+        }) self.packages.${pkgs.system}
+      );
     };
 }

@@ -25,10 +25,10 @@
             import nixpkgs {
               inherit system;
               config = { };
-            overlays = [
-              rust-overlay.overlays.default
-              self.overlays.default
-            ];
+              overlays = [
+                rust-overlay.overlays.default
+                self.overlays.default
+              ];
             }
           )
         );
@@ -43,26 +43,23 @@
           ];
         };
       };
-      devShells = eachSystem (
-        pkgs:
-        {
-          default = pkgs.mkShellNoCC {
-            packages = with pkgs; [
-              rustToolchain
-              openssl
-              pkg-config
-              cargo-deny
-              cargo-edit
-              cargo-watch
-              rust-analyzer
-            ];
-            env = {
-              RUST_BACKTRACE = 1;
-              RUST_SRC_PATH = "${pkgs.rustToolchain}/lib/rustlib/src/rust/library";
-            };
+      devShells = eachSystem (pkgs: {
+        default = pkgs.mkShellNoCC {
+          packages = with pkgs; [
+            rustToolchain
+            openssl
+            pkg-config
+            cargo-deny
+            cargo-edit
+            bacon
+            rust-analyzer
+          ];
+          env = {
+            RUST_BACKTRACE = 1;
+            RUST_SRC_PATH = "${pkgs.rustToolchain}/lib/rustlib/src/rust/library";
           };
-        }
-      );
+        };
+      });
       packages = eachSystem (
         pkgs:
         let
@@ -87,11 +84,12 @@
           };
         }
       );
-      apps = eachSystem (pkgs: {
-        default = {
+      apps = eachSystem (
+        pkgs:
+        pkgs.lib.mapAttrs (_: drv: {
           type = "app";
-          program = "${self.packages.${pkgs.system}.default}/bin/${pname}";
-        };
-      });
+          program = "${drv}${drv.passthru.exePath or "/bin/${drv.pname or drv.name}"}";
+        }) self.packages.${pkgs.system}
+      );
     };
 }
