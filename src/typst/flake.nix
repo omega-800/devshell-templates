@@ -163,7 +163,7 @@
               watch-script
               watch-open
               watch-all
-              pkgs.typstfmt
+              pkgs.typstyle
             ];
           };
         }
