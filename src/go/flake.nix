@@ -62,7 +62,7 @@
         pkgs.lib.mapAttrs (_: drv: {
           type = "app";
           program = "${drv}${drv.passthru.exePath or "/bin/${drv.pname or drv.name}"}";
-        }) self.packages.${pkgs.system}
+        }) self.packages.${pkgs.stdenv.hostPlatform.system}
       );
     };
 }

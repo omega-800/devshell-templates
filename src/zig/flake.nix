@@ -42,8 +42,8 @@
       devShells = eachSystem (pkgs: {
         default = pkgs.mkShellNoCC {
           packages = [
-            zig-overlay.packages.${pkgs.system}."${version}"
-            zls-overlay.packages.${pkgs.system}."${version}"
+            zig-overlay.packages.${pkgs.stdenv.hostPlatform.system}."${version}"
+            zls-overlay.packages.${pkgs.stdenv.hostPlatform.system}."${version}"
             pkgs.lldb
           ];
         };
@@ -81,7 +81,7 @@
           pkgs.lib.mapAttrs (_: drv: {
             type = "app";
             program = "${drv}${drv.passthru.exePath or "/bin/${drv.pname or drv.name}"}";
-          }) self.packages.${pkgs.system}
+          }) self.packages.${pkgs.stdenv.hostPlatform.system}
         );
       */
     };
