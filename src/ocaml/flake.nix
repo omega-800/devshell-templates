@@ -1,5 +1,5 @@
 {
-  description = "idris development environment";
+  description = "ocaml development environment";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -22,14 +22,15 @@
       pname = "";
     in
     {
-      devShells = eachSystem (
-        pkgs:
-        {
-          default = pkgs.mkShellNoCC { 
-            buildInputs = with pkgs; [ idris2 rlwrap ];
-          };
-        }
-      );
+      devShells = eachSystem (pkgs: {
+        default = pkgs.mkShellNoCC {
+          buildInputs = with pkgs; [
+            ocaml
+            ocamlformat
+            opam
+          ];
+        };
+      });
 
       packages = eachSystem (
         pkgs:
@@ -38,7 +39,7 @@
           root = ./.;
         in
         {
-          default = pkgs.buildIdrisPackage {
+          default = pkgs.buildDunePackage {
             name = pname;
             src = root;
             # src = fs.toSource {
