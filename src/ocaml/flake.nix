@@ -23,12 +23,15 @@
     in
     {
       devShells = eachSystem (pkgs: {
-        default = pkgs.mkShellNoCC {
+        default = pkgs.mkShell {
           buildInputs = with pkgs; [
             ocaml
             ocamlformat
             opam
+            dune
+            rlwrap
           ];
+          env.OCAMLRUNPARAM="b";
         };
       });
 
