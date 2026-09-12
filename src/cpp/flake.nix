@@ -28,7 +28,7 @@
       devShells = eachSystem (pkgs: {
         default = pkgs.mkShellNoCC {
           packages = with pkgs; [
-            gnumake
+            cmake
             gcc
             gdb
             pkg-config
