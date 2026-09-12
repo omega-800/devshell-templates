@@ -26,11 +26,9 @@
     in
     {
       devShells = eachSystem (pkgs: {
-        default = pkgs.mkShellNoCC {
+        default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
           packages = with pkgs; [
             cmake
-            gcc
-            gdb
             pkg-config
           ];
         };
