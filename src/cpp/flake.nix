@@ -1,10 +1,13 @@
 {
-  description = "c development environment";
+  description = "c++ development environment";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+    }:
     let
       systems = nixpkgs.lib.platforms.unix;
       eachSystem =
@@ -26,12 +29,12 @@
         default = pkgs.mkShellNoCC {
           packages = with pkgs; [
             gnumake
-            gdb
             gcc
+            gdb
+            pkg-config
           ];
         };
       });
-
       packages = eachSystem (
         pkgs:
         let
@@ -39,22 +42,20 @@
           root = ./.;
         in
         {
-          default = pkgs.stdenvNoCC.mkDerivation {
+          default = pkgs.mkDerivation {
             inherit pname;
             version = "0.0.1";
             src = fs.toSource {
               inherit root;
               fileset = fs.intersection (fs.gitTracked root) (
                 fs.unions [
-                  ./Makefile
-                  (fs.fileFilter (f: (f.hasExt "c") || (f.hasExt "h")) ./src)
+                  (fs.fileFilter (f: f.hasExt "cpp" || f.hasExt "hpp") ./src)
                 ]
               );
             };
           };
         }
       );
-
       apps = eachSystem (
         pkgs:
         pkgs.lib.mapAttrs (_: drv: {
