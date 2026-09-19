@@ -40,17 +40,18 @@
           root = ./.;
         in
         {
-          default = pkgs.mkDerivation {
+          default = pkgs.stdenv.mkDerivation {
             inherit pname;
             version = "0.0.1";
             src = fs.toSource {
               inherit root;
               fileset = fs.intersection (fs.gitTracked root) (
                 fs.unions [
-                  (fs.fileFilter (f: f.hasExt "cpp" || f.hasExt "hpp") ./src)
+                  (fs.fileFilter (f: f.hasExt "cpp" || f.hasExt "hpp" || f.name == "CMakeLists.txt") ./.)
                 ]
               );
             };
+            nativeBuildInputs = [ pkgs.cmake ];
           };
         }
       );
